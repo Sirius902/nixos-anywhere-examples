@@ -20,34 +20,51 @@
             content = {
               type = "filesystem";
               format = "vfat";
-              mountpoint = "/boot";
+              mountpoint = "/efi";
             };
           };
           root = {
             name = "root";
             size = "100%";
             content = {
-              type = "lvm_pv";
-              vg = "pool";
+              type = "zfs";
+              pool = "zroot";
             };
           };
         };
       };
     };
-    lvm_vg = {
-      pool = {
-        type = "lvm_vg";
-        lvs = {
-          root = {
-            size = "100%FREE";
-            content = {
-              type = "filesystem";
-              format = "ext4";
-              mountpoint = "/";
-              mountOptions = [
-                "defaults"
-              ];
+    zpool = {
+      zroot = {
+        type = "zpool";
+        rootFsOptions = {
+          acltype = "posixacl";
+          compression = "zstd";
+          xattr = "sa";
+        };
+        options.ashift = "12";
+        mountpoint = "/";
+        postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^zroot@blank$' || zfs snapshot zroot@blank";
+
+        datasets = {
+          nix = {
+            type = "zfs_fs";
+            mountpoint = "/nix";
+            options = {
+              atime = "off";
+              mountpoint = "legacy";
             };
+          };
+          persist = {
+            type = "zfs_fs";
+            mountpoint = "/persist";
+            options.mountpoint = "legacy";
+          };
+          home = {
+            type = "zfs_fs";
+            mountpoint = "/home";
+            options.mountpoint = "legacy";
+            postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^zroot/home@blank$' || zfs snapshot zroot/home@blank";
           };
         };
       };

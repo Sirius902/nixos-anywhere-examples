@@ -5,6 +5,15 @@
 
   outputs = { nixpkgs, disko, ... }:
     {
+      nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          disko.nixosModules.disko
+          { disko.devices.disk.disk1.device = "/dev/vda"; }
+          ./configuration.nix
+        ];
+      };
+
       nixosConfigurations.hetzner-cloud = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
